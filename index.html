@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<!-- پیاده‌سازی اعمال‌شده (پیشنهاد ۲ — تأیید ارشیا، ۲۲ نوامبر ۲۰۲۶) — وظیفهٔ id=1، ایجنت «توسعه‌دهنده فرانت‌اند» (id=5)
+     بر اساس طرح UI/UX تأییدشده (پیشنهاد id=1) در workspace/agent-panel/weather-uiux-design.md
+     توجه: مقادیر آب‌وهوا در این فایل «دادهٔ نمونهٔ نمایشی» هستند (data-sample) و ایجنت جاوااسکریپت
+     (id=7) در قدم بعد آن‌ها را با دادهٔ زندهٔ API جایگزین می‌کند. منطق fetch در این فایل نیست. -->
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>هواشناسی</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body data-condition="sunny">
+  <div class="offline-banner" id="offlineBanner" role="status" hidden>شما آفلاین هستید؛ آخرین اطلاعات نمایش داده می‌شود.</div>
+
+  <main class="app">
+    <!-- جست‌وجوی شهر + موقعیت من -->
+    <section class="search" aria-label="جست‌وجوی شهر">
+      <form class="search-box" id="searchForm" role="search">
+        <svg class="search-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><line x1="16.5" y1="16.5" x2="21" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <label class="visually-hidden" for="cityInput">نام شهر را جست‌وجو کنید</label>
+        <input id="cityInput" type="search" placeholder="نام شهر را جست‌وجو کنید…" autocomplete="off" aria-expanded="false" aria-controls="suggestions" aria-describedby="searchHint">
+        <span id="searchHint" class="visually-hidden">با تایپ دو حرف، پیشنهاد شهرها نمایش داده می‌شود.</span>
+      </form>
+      <button class="btn btn-secondary" id="geoBtn" type="button">موقعیت من</button>
+      <ul class="suggestions" id="suggestions" role="listbox" aria-label="پیشنهاد شهرها" hidden></ul>
+      <div class="recent" id="recentSearches" hidden>
+        <p class="recent-title">جست‌وجوهای اخیر</p>
+        <ul class="recent-list" id="recentList"></ul>
+        <button class="recent-clear" id="recentClear" type="button" aria-label="پاک کردن تاریخچهٔ جست‌وجو">✕</button>
+      </div>
+      <p class="search-empty" id="searchEmpty" hidden>شهری با این نام پیدا نشد؛ املا را بررسی کنید.</p>
+    </section>
+
+    <!-- نمای اصلی: وضعیت فعلی -->
+    <section class="hero card" aria-labelledby="cityName" aria-live="polite">
+      <div class="hero-loading skeleton-block" id="heroSkeleton" hidden>
+        <span class="skeleton skeleton-line"></span>
+        <span class="skeleton skeleton-temp"></span>
+        <span class="skeleton skeleton-icon"></span>
+      </div>
+      <div class="hero-content" id="heroContent">
+        <h1 class="city" id="cityName" data-sample>تهران</h1>
+        <p class="city-meta"><span id="jalaliDate" data-sample>یکشنبه، ۲ آذر ۱۴۰۵</span> · <span id="localTime" data-sample>۲۳:۳۰</span></p>
+        <p class="temp"><span id="currentTemp" data-sample>۲۴</span><span class="temp-unit">°C</span></p>
+        <p class="condition">
+          <svg class="condition-icon" viewBox="0 0 80 80" width="80" height="80" role="img" aria-label="آسمانی صاف" id="conditionIcon">
+            <circle cx="40" cy="40" r="18" fill="#F59E0B"/>
+            <g stroke="#F59E0B" stroke-width="4" stroke-linecap="round">
+              <line x1="40" y1="8" x2="40" y2="16"/><line x1="40" y1="64" x2="40" y2="72"/>
+              <line x1="8" y1="40" x2="16" y2="40"/><line x1="64" y1="40" x2="72" y2="40"/>
+              <line x1="17" y1="17" x2="23" y2="23"/><line x1="57" y1="57" x2="63" y2="63"/>
+              <line x1="63" y1="17" x2="57" y2="23"/><line x1="23" y1="57" x2="17" y2="63"/>
+            </g>
+          </svg>
+          <span id="conditionText" data-sample>آسمانی صاف</span>
+        </p>
+        <p class="temp-range">حداکثر <span id="tempMax" data-sample>۲۸°</span> / حداقل <span id="tempMin" data-sample>۱۵°</span></p>
+      </div>
+      <div class="hero-error" id="heroError" hidden>
+        <p>دریافت اطلاعات ممکن نشد</p>
+        <p class="error-cause" id="errorCause">اتصال به سرویس هواشناسی برقرار نشد. دوباره تلاش کنید.</p>
+        <button class="btn btn-primary" id="retryBtn" type="button">تلاش دوباره</button>
+      </div>
+    </section>
+
+    <!-- جزئیات فعلی -->
+    <section class="details" aria-label="جزئیات وضعیت فعلی">
+      <div class="detail-card card">
+        <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M12 3c3 4 6 7 6 10a6 6 0 1 1-12 0c0-3 3-6 6-10z" fill="none" stroke="#1D4ED8" stroke-width="2"/></svg>
+        <span class="detail-label">رطوبت</span>
+        <span class="detail-value"><span id="humidity" data-sample>۴۲</span>٪</span>
+      </div>
+      <div class="detail-card card">
+        <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M3 8h9a3 3 0 1 0-3-3M3 12h13a3 3 0 1 1-3 3M3 16h6" fill="none" stroke="#1D4ED8" stroke-width="2" stroke-linecap="round"/></svg>
+        <span class="detail-label">سرعت باد</span>
+        <span class="detail-value"><span id="windSpeed" data-sample>۱۴</span> km/h · <span id="windDir" data-sample>شمال شرقی</span></span>
+      </div>
+      <div class="detail-card card">
+        <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M6 15a4 4 0 1 1 .6-7.96A5 5 0 0 1 16.3 9 3.5 3.5 0 0 1 16 16H6z" fill="none" stroke="#1D4ED8" stroke-width="2"/><line x1="12" y1="12" x2="12" y2="18" stroke="#1D4ED8" stroke-width="2" stroke-linecap="round"/></svg>
+        <span class="detail-label">فشار هوا</span>
+        <span class="detail-value"><span id="pressure" data-sample>۱۰۱۳</span> hPa</span>
+      </div>
+      <div class="detail-card card">
+        <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M12 3v10m0 0-4-4m4 4 4-4M5 19h14" fill="none" stroke="#1D4ED8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="detail-label">احتمال بارش</span>
+        <span class="detail-value"><span id="precipChance" data-sample>۵</span>٪</span>
+      </div>
+      <p class="section-empty" id="detailsEmpty" hidden>داده‌ای در دسترس نیست.</p>
+    </section>
+
+    <!-- پیش‌بینی ساعتی -->
+    <section class="hourly card" aria-label="پیش‌بینی ساعتی">
+      <h2 class="section-title">پیش‌بینی ساعتی</h2>
+      <div class="hourly-scroll" id="hourlyScroll">
+        <button class="scroll-btn scroll-prev" id="hourlyPrev" type="button" aria-label="ساعت‌های قبل">‹</button>
+        <ul class="hourly-list" id="hourlyList">
+          <!-- ۱۲ ساعت آینده؛ آیتم‌ها نمونهٔ نمایشی‌اند و با دادهٔ زنده جایگزین می‌شوند -->
+          <li class="hourly-item"><span class="hourly-now">اکنون</span><span class="hourly-icon" aria-hidden="true">☀️</span><span class="hourly-temp">۲۴°</span></li>
+          <li class="hourly-item"><span>۱</span><span class="hourly-icon" aria-hidden="true">☀️</span><span class="hourly-temp">۲۳°</span></li>
+          <li class="hourly-item"><span>۲</span><span class="hourly-icon" aria-hidden="true">🌙</span><span class="hourly-temp">۲۱°</span></li>
+          <li class="hourly-item"><span>۳</span><span class="hourly-icon" aria-hidden="true">🌙</span><span class="hourly-temp">۲۰°</span></li>
+          <li class="hourly-item"><span>۴</span><span class="hourly-icon" aria-hidden="true">🌙</span><span class="hourly-temp">۱۹°</span></li>
+          <li class="hourly-item"><span>۵</span><span class="hourly-icon" aria-hidden="true">🌙</span><span class="hourly-temp">۱۸°</span></li>
+          <li class="hourly-item"><span>۶</span><span class="hourly-icon" aria-hidden="true">🌙</span><span class="hourly-temp">۱۸°</span></li>
+          <li class="hourly-item"><span>۷</span><span class="hourly-icon" aria-hidden="true">🌤️</span><span class="hourly-temp">۱۹°</span></li>
+          <li class="hourly-item"><span>۸</span><span class="hourly-icon" aria-hidden="true">🌤️</span><span class="hourly-temp">۲۱°</span></li>
+          <li class="hourly-item"><span>۹</span><span class="hourly-icon" aria-hidden="true">☀️</span><span class="hourly-temp">۲۳°</span></li>
+          <li class="hourly-item"><span>۱۰</span><span class="hourly-icon" aria-hidden="true">☀️</span><span class="hourly-temp">۲۵°</span></li>
+          <li class="hourly-item"><span>۱۱</span><span class="hourly-icon" aria-hidden="true">☀️</span><span class="hourly-temp">۲۷°</span></li>
+        </ul>
+        <button class="scroll-btn scroll-next" id="hourlyNext" type="button" aria-label="ساعت‌های بعد">›</button>
+      </div>
+      <p class="section-empty" id="hourlyEmpty" hidden>داده‌ای در دسترس نیست.</p>
+    </section>
+
+    <!-- پیش‌بینی روزانه -->
+    <section class="daily card" aria-label="پیش‌بینی روزانه">
+      <h2 class="section-title">پیش‌بینی روزانه</h2>
+      <ul class="daily-list" id="dailyList">
+        <!-- ۷ روز؛ ردیف‌ها نمونهٔ نمایشی‌اند و با دادهٔ زنده جایگزین می‌شوند -->
+        <li class="daily-row"><span class="daily-day">امروز</span><span class="daily-icon" aria-label="آفتابی">☀️</span><span class="daily-temps"><span>۱۵°</span><span class="temp-bar" style="--min:15; --max:28;" aria-hidden="true"></span><span>۲۸°</span></span></li>
+        <li class="daily-row"><span class="daily-day">دوشنبه</span><span class="daily-icon" aria-label="ابری">☁️</span><span class="daily-temps"><span>۱۶°</span><span class="temp-bar" style="--min:16; --max:26;" aria-hidden="true"></span><span>۲۶°</span></span></li>
+        <li class="daily-row"><span class="daily-day">سه‌شنبه</span><span class="daily-icon" aria-label="بارانی">🌧️</span><span class="daily-temps"><span>۱۴°</span><span class="temp-bar" style="--min:14; --max:22;" aria-hidden="true"></span><span>۲۲°</span></span></li>
+        <li class="daily-row"><span class="daily-day">چهارشنبه</span><span class="daily-icon" aria-label="آفتابی">☀️</span><span class="daily-temps"><span>۱۵°</span><span class="temp-bar" style="--min:15; --max:27;" aria-hidden="true"></span><span>۲۷°</span></span></li>
+        <li class="daily-row"><span class="daily-day">پنجشنبه</span><span class="daily-icon" aria-label="آفتابی">☀️</span><span class="daily-temps"><span>۱۷°</span><span class="temp-bar" style="--min:17; --max:29;" aria-hidden="true"></span><span>۲۹°</span></span></li>
+        <li class="daily-row"><span class="daily-day">جمعه</span><span class="daily-icon" aria-label="ابری">☁️</span><span class="daily-temps"><span>۱۶°</span><span class="temp-bar" style="--min:16; --max:25;" aria-hidden="true"></span><span>۲۵°</span></span></li>
+        <li class="daily-row"><span class="daily-day">شنبه</span><span class="daily-icon" aria-label="آفتابی">☀️</span><span class="daily-temps"><span>۱۵°</span><span class="temp-bar" style="--min:15; --max:26;" aria-hidden="true"></span><span>۲۶°</span></span></li>
+      </ul>
+      <p class="section-empty" id="dailyEmpty" hidden>داده‌ای در دسترس نیست.</p>
+    </section>
+  </main>
+
+  <div class="loading-announcer visually-hidden" role="status" aria-live="polite" id="loadingAnnouncer">در حال دریافت اطلاعات هوا…</div>
+  <script src="visual.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,146 @@
+/* پیاده‌سازی اعمال‌شده (پیشنهاد ۲ — تأیید ارشیا، ۲۲ نوامبر ۲۰۲۶) — وظیفهٔ id=1، ایجنت «توسعه‌دهنده فرانت‌اند» (id=5)
+   سیستم طراحی از طرح تأییدشده (پیشنهاد id=1): شبکهٔ ۸px، کارت ۲۰px، دکمهٔ اصلی ۴۸px،
+   انیمیشن ۱۵۰–۳۰۰ms با احترام به prefers-reduced-motion.
+   رنگ متن روی پس‌زمینهٔ طوفانی (بازبینی طراح، وظیفهٔ id=3): سفید #FFFFFF، کنتراست ۷٫۵۸:۱ روی #475569؛
+   متن فقط در ناحیهٔ بالایی گرادیان (نزدیک #475569) یا روی کارت سفید مجاز است — نه روی بخش پایینی گرادیان. */
+
+:root {
+  --text: #0F172A;
+  --text-secondary: #475569;
+  --surface: #FFFFFF;
+  --accent: #1D4ED8;
+  --error: #B91C1C;
+  --success: #15803D;
+  --border: #E2E8F0;
+  --radius-card: 20px;
+  --radius-btn: 12px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 16px;
+  --space-4: 24px;
+  --space-5: 32px;
+  --space-6: 48px;
+  --font: "Vazirmatn", Tahoma, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--text);
+  min-height: 100vh;
+  transition: background 300ms ease;
+}
+/* گرادیان آسمانِ زنده — فقط پس‌زمینه و آیکون؛ متن همیشه روی کارت سفید با پالت ثابت است */
+body[data-condition="sunny"]  { background: linear-gradient(180deg, #FDE68A 0%, #FEF3C7 55%, #FFF7ED 100%); }
+body[data-condition="cloudy"] { background: linear-gradient(180deg, #CBD5E1 0%, #E2E8F0 55%, #F1F5F9 100%); }
+body[data-condition="rainy"]  { background: linear-gradient(180deg, #93C5FD 0%, #DBEAFE 55%, #EFF6FF 100%); }
+body[data-condition="snowy"]  { background: linear-gradient(180deg, #BAE6FD 0%, #E0F2FE 55%, #F0F9FF 100%); }
+body[data-condition="night"]   { background: linear-gradient(180deg, #1E293B 0%, #334155 60%, #475569 100%); }
+body[data-condition="stormy"] { background: linear-gradient(180deg, #475569 0%, #64748B 55%, #94A3B8 100%); } /* تأییدشده در پیشنهاد ۲ — متن روی آن سفید #FFFFFF */
+body[data-condition="foggy"]  { background: linear-gradient(180deg, #CBD5E1 0%, #E2E8F0 55%, #F8FAFC 100%); } /* تأییدشده در پیشنهاد ۲ */
+
+.app { max-width: 960px; margin: 0 auto; padding: var(--space-4) var(--space-3) var(--space-6); }
+.card { background: var(--surface); border-radius: var(--radius-card); box-shadow: 0 4px 24px rgba(15, 23, 42, 0.08); padding: var(--space-4); }
+
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* بنر آفلاین */
+.offline-banner { background: #FEF3C7; color: #92400E; text-align: center; padding: var(--space-2) var(--space-3); font-size: 14px; }
+
+/* دکمه‌ها */
+.btn { font-family: var(--font); font-size: 16px; font-weight: 700; height: 48px; padding: 0 var(--space-4); border-radius: var(--radius-btn); border: 1px solid transparent; cursor: pointer; transition: background 150ms ease, opacity 150ms ease; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: #1E40AF; }
+.btn-secondary { background: var(--surface); border-color: #CBD5E1; color: var(--text); }
+.btn-secondary:hover { background: #F1F5F9; }
+.btn:focus-visible, input:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.btn:disabled { opacity: 0.5; cursor: default; }
+
+/* جست‌وجو */
+.search { position: relative; display: flex; gap: var(--space-2); align-items: flex-start; margin-bottom: var(--space-4); flex-wrap: wrap; }
+.search-box { flex: 1; min-width: 220px; display: flex; align-items: center; gap: var(--space-2); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-btn); height: 52px; padding: 0 var(--space-3); }
+.search-box:focus-within { border-color: var(--accent); }
+.search-box input { flex: 1; border: 0; outline: 0; font-family: var(--font); font-size: 16px; color: var(--text); background: transparent; min-width: 0; }
+.search-box input::placeholder { color: var(--text-secondary); }
+.search-icon { color: var(--text-secondary); flex-shrink: 0; }
+.suggestions { position: absolute; top: 60px; right: 0; left: 0; z-index: 10; list-style: none; margin: 0; padding: var(--space-2); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-btn); box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12); }
+.suggestions li { padding: var(--space-2) var(--space-3); border-radius: 8px; cursor: pointer; }
+.suggestions li[aria-selected="true"], .suggestions li:hover { background: #EFF6FF; }
+.search-empty { width: 100%; color: var(--error); font-size: 14px; margin: var(--space-1) 0 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-btn); padding: 0 var(--space-3); }
+.recent { width: 100%; display: flex; align-items: center; gap: var(--space-2); font-size: 13px; color: var(--text-secondary); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-btn); padding: 0 var(--space-3); }
+.recent-title { margin: 0; font-weight: 500; }
+.recent-list { display: flex; gap: var(--space-2); list-style: none; margin: 0; padding: 0; flex-wrap: wrap; }
+.recent-list li { background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: var(--space-1) var(--space-3); cursor: pointer; }
+.recent-clear { border: 0; background: transparent; cursor: pointer; color: var(--text-secondary); font-size: 14px; }
+
+/* کارت قهرمان */
+.hero { max-width: 720px; margin: 0 auto var(--space-4); text-align: center; }
+.city { font-size: 20px; font-weight: 700; margin: 0; }
+.city-meta { color: var(--text-secondary); font-size: 14px; margin: var(--space-1) 0 0; }
+.temp { font-size: 64px; font-weight: 800; line-height: 1.2; margin: var(--space-2) 0 0; }
+.temp-unit { font-size: 32px; font-weight: 700; }
+.condition { display: flex; align-items: center; justify-content: center; gap: var(--space-3); font-size: 16px; margin: var(--space-2) 0 0; }
+.condition-icon { width: 80px; height: 80px; flex-shrink: 0; }
+.temp-range { color: var(--text-secondary); margin: var(--space-2) 0 0; }
+.hero-error p { margin: var(--space-2) 0; }
+.error-cause { color: var(--text-secondary); font-size: 14px; }
+
+/* اسکلت بارگذاری */
+.skeleton-block { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); padding: var(--space-4) 0; }
+.skeleton { display: block; background: #E2E8F0; border-radius: 8px; animation: pulse 1500ms ease-in-out infinite; }
+.skeleton-line { width: 180px; height: 20px; }
+.skeleton-temp { width: 140px; height: 64px; }
+.skeleton-icon { width: 80px; height: 80px; border-radius: 50%; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+/* جزئیات */
+.details { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-3); margin-bottom: var(--space-4); }
+.detail-card { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); text-align: center; padding: var(--space-3); }
+.detail-label { font-size: 13px; font-weight: 500; color: var(--text-secondary); }
+.detail-value { font-size: 20px; font-weight: 700; }
+
+/* پیش‌بینی ساعتی */
+.hourly { margin-bottom: var(--space-4); }
+.section-title { font-size: 20px; font-weight: 700; margin: 0 0 var(--space-3); }
+.hourly-scroll { display: flex; align-items: center; gap: var(--space-2); }
+.hourly-list { display: flex; gap: var(--space-2); list-style: none; margin: 0; padding: var(--space-1); overflow-x: auto; scroll-behavior: smooth; flex: 1; }
+.hourly-item { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); min-width: 64px; padding: var(--space-2); font-size: 14px; }
+.hourly-temp { font-size: 16px; font-weight: 700; }
+.hourly-icon { font-size: 32px; line-height: 1; }
+.hourly-now { font-weight: 700; color: var(--accent); }
+.scroll-btn { width: 40px; height: 40px; flex-shrink: 0; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); font-size: 20px; cursor: pointer; color: var(--text); }
+.scroll-btn:hover { background: #F1F5F9; }
+
+/* پیش‌بینی روزانه */
+.daily-list { list-style: none; margin: 0; padding: 0; }
+.daily-row { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) 0; border-bottom: 1px solid #F1F5F9; }
+.daily-row:last-child { border-bottom: 0; }
+.daily-day { width: 72px; font-weight: 500; }
+.daily-icon { font-size: 24px; width: 32px; text-align: center; }
+.daily-temps { display: flex; align-items: center; gap: var(--space-2); flex: 1; font-weight: 700; }
+.temp-bar { flex: 1; height: 6px; border-radius: 999px; background: linear-gradient(to left, #F59E0B, #2563EB); opacity: 0.85; }
+
+.section-empty { color: var(--text-secondary); font-size: 14px; margin: var(--space-2) 0 0; }
+
+/* ریسپانسیو */
+@media (max-width: 1024px) {
+  .details { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+  .app { padding: var(--space-3) var(--space-3) var(--space-5); }
+  .hero { padding: var(--space-3); }
+  .temp { font-size: 56px; }
+  .details { grid-template-columns: repeat(2, 1fr); }
+  .scroll-btn { display: none; }
+  .search { flex-direction: column; }
+  .search-box { width: 100%; }
+  .btn-secondary { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}
